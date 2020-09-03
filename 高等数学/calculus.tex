@@ -1,0 +1,495 @@
+% ! TEX program = xelatex
+\documentclass[a4paper,10pt,fleqn]{article}
+\usepackage[left=10mm,right=53mm,top=12mm,bottom=15mm,marginparwidth=40mm,marginparsep=3mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{thmtools}
+\usepackage[UTF8]{ctex}
+\usepackage{amssymb}
+\usepackage{esint}
+\usepackage[shortlabels]{enumitem}
+
+% Add `\rm` to make contents within CTeX `amsthm` environments back Roman
+\declaretheorem[title=定理,postheadhook=\rm,numbered=no]{thm}
+\declaretheorem[title=证明,postheadhook=\rm,style=remark,numbered=no]{prof}
+\declaretheorem[title=例,postheadhook=\rm]{exmp}
+\declaretheorem[title=注意,postheadhook=\rm,style=remark,numbered=no]{attn}
+% Specific theorems
+\declaretheorem[title=隐函数存在定理,postheadhook=\rm]{thm_impl}
+
+\newcommand{\pdif}[2]{\frac{\partial #1}{\partial #2}}
+
+\begin{document}
+
+\section{多元函数微分法及应用}
+
+\subsection{多元函数的基本概念}
+
+\begin{exmp}
+    \marginpar{\vspace{7em}利用 $e^x-1\sim x(x\to 0)$.}
+    \begin{align*}
+         & \lim_{(x,y)\to(0,0)}\frac{xy}{\sqrt{2-e^{xy}}-1}                    \\
+         & =\lim_{(x,y)\to(0,0)}\frac{xy\big(\sqrt{2-e^{xy}}+1\big)}{1-e^{xy}} \\
+         & =\lim_{(x,y)\to(0,0)}-\big(\sqrt{2-e^{xy}}+1\big)                   \\
+         & =-2.
+    \end{align*}
+\end{exmp}
+
+\begin{exmp}
+    证明极限 $\lim_{(x,y)\to(0,0)}\frac{x^2y^2}{x^2y^2+(x-y)^2}$ 不存在.
+    \marginpar{\vspace{2.5em}分子分母变量的阶数不同, 故不能使用 $y=kx$ 等方式.}
+    \[
+        \lim_{\substack{(x,y)\to(0,0)\\y=x}}\frac{x^2y^2}{x^2y^2+(x-y)^2}
+        =\frac{x^4}{x^4}=1,
+    \]
+    但是
+    \[
+        \lim_{\substack{(x,y)\to(0,0)\\y=-x}}\frac{x^2y^2}{x^2y^2+(x-y)^2}
+        =\frac{x^4}{x^4+4x^2}=\frac{x^2}{x^2+4}=0.
+    \]
+    两种方式求得的极限值不同, 故所求极限不存在.
+\end{exmp}
+
+\begin{exmp}
+    证明 $\lim_{(x,y)\to(0,0)}\frac{xy}{\sqrt{x^2+y^2}}=0$.
+    \marginpar{\vspace{3em}不等式 $2xy\leq x^2+y^2$.}
+    \[
+        \left|\frac{xy}{\sqrt{x^2+y^2}}-0\right|\leq\frac{1}{2}\sqrt{x^2+y^2}.
+    \]
+    要使 $\left|\frac{xy}{\sqrt{x^2+y^2}}-0\right|<\varepsilon$ 成立, 只需取 $\delta=2\varepsilon$, 故原式成立.
+\end{exmp}
+
+\begin{exmp}
+    设 $F(x,y)=f(x)$, 证明 $F(x,y)$ 是 $\mathbb{R}^2$ 上的连续函数.
+
+    设 $P_0(x_0,y_0)\in\mathbb{R}^2$.
+
+    根据 $|x-x_0|\leq\rho(P,P_0)$ 和 $\big|f(x)-f(x_0)\big|=\big|F(P)-F(P_0)\big|$:
+    \begin{align*}
+        \text{$\sin x$ 在 $x_0$ 处连续} & \iff\forall\varepsilon>0\exists\delta>0\left(|x-x_0|<\delta\implies\big|f(x)-f(x_0)\big|<\varepsilon\right)         \\
+                                        & \implies\forall\varepsilon>0\exists\delta>0\left(\rho(P,P_0)<\delta\implies\big|F(P)-F(P_0)\big|<\varepsilon\right) \\
+                                        & \iff\text{$f(x,y)$ 在 $P_0$ 处连续.}
+    \end{align*}
+    由 $P_0$ 的任意性知, $F(x,y)$ 在 $\mathbb{R}^2$ 上连续.
+\end{exmp}
+
+\subsection{全微分}
+
+\begin{thm}[必要条件]
+    如果函数 $z=f(x,y)$ 在点 $(x,y)$ 可微分, 那么该函数在点 $(x,y)$ 的偏导数 $\pdif{z}{x}$
+    与 $\pdif{z}{y}$ 必定存在, 且函数 $z=f(x,y)$ 在点 $(x,y)$ 的全微分为
+    \[
+        {\rm d}z=\pdif{z}{x}\Delta x+\pdif{z}{y}\Delta y.
+    \]
+\end{thm}
+
+\begin{thm}[充分条件]
+    如果函数 $z=f(x,y)$ 的偏导数 $\pdif{z}{x}$ 与 $\pdif{z}{x}$ 在点
+    $(x,y)$ 连续, 那么函数在该点可微分.
+\end{thm}
+
+\subsection{多元函数的求导法则}
+
+\begin{exmp}
+    设 $z(x,y)=f\big(\varphi(x,y),x,y\big)$, 令 $u=\varphi(x,y)$, 求 $\pdif{z}{x}$ 和
+    $\pdif{z}{y}$.
+    \begin{align*}
+        \pdif{z}{x}=\pdif{f}{u}\pdif{u}{x}+\pdif{f}{x}, \\
+        \pdif{z}{y}=\pdif{f}{u}\pdif{u}{y}+\pdif{f}{y}.
+    \end{align*}
+    \begin{attn}
+        $z(x,y)=f\big(\varphi(x,y),x,y\big)$ 的参数是 $x$ 和 $y$; $f(u,x,y)$ 的参数是 $u$, $x$ 和 $y$. 所以
+        $\pdif{z}{x}$ 与 $\pdif{f}{x}$, $\pdif{z}{y}$ 与 $\pdif{f}{y}$ 的意义是不同的.
+    \end{attn}
+\end{exmp}
+
+\begin{exmp}
+    设 $u=f(x,y)$ 的所有二阶偏导数连续, 将 $\big(\pdif{u}{x}\big)^2+\big(\pdif{u}{y}\big)^2$ 转换为极坐标系中的形式.
+
+    由直角坐标系与极坐标系间的关系, 可将函数 $u=f(x,y)$ 转换成 $\rho$ 与 $\theta$ 的函数:
+    \[
+        u=f(x,y)=f(\rho\cos\theta,\rho\sin\theta)=F(\rho,\theta).
+    \]
+    再由 $\rho=\sqrt{x^2+y^2}$ 与 $\theta=\arctan\frac{y}{x}$ 可得
+    \begin{align*}
+        \pdif{u}{x}=\pdif{F}{\rho}\pdif{\rho}{x}+\pdif{F}{\theta}\pdif{\theta}{x}=F_\rho\frac{x}{\rho}-F_\theta\frac{y}{\rho^2}=F_\rho\cos\theta-F_\theta\frac{\sin\theta}{\rho}, \\
+        \pdif{u}{x}=\pdif{F}{\rho}\pdif{\rho}{x}+\pdif{F}{\theta}\pdif{\theta}{x}=F_\rho\frac{x}{\rho}-F_\theta\frac{y}{\rho^2}=F_\rho\sin\theta+F_\theta\frac{\cos\theta}{\rho}.
+    \end{align*}
+    两式平方后相加, 得
+    \[
+        \left(\pdif{u}{x}\right)^2+\left(\pdif{u}{y}\right)^2=F_\rho^2+\frac{1}{\rho^2}F_\theta^2.
+    \]
+\end{exmp}
+
+\subsection{隐函数的求导公式}
+
+\begin{thm_impl}
+    \marginpar{设想一座山的表面, 一个平面横切它一刀, 得到的截线就是 $F(x,y)=0$. 此时 $F_y(x_0,y_0)$
+        不能为零, 否则在点 $P$ 附近得到的就不是截线, 而是一个面了.}
+    设函数 $F(x,y)$ 在点 $P(x_0,y_0)$ 的某一邻域内具有连续偏导数, 且 $F(x_0,y_0)=0$,
+    $F_y(x_0,y_0)\neq0$, 则方程 $F(x,y)=0$ 在点 $(x_0,y_0)$ 的某一邻域内恒能唯一确定一个连续且具有
+    连续偏导数的函数 $y=f(x)$, 它满足条件 $y_0=f(x_0)$ 并有
+    \[
+        \frac{{\rm d}y}{{\rm d}x}=-\frac{F_x}{F_y}.
+    \]
+\end{thm_impl}
+
+\begin{thm_impl}
+    设函数 $F(x,y,z)$ 在点 $P(x_0,y_0,z_0)$ 的某一邻域内具有连续偏导数, 且\\
+    $F(x_0,y_0,z_0)=0$, $F_z(x_0,y_0,z_0)\neq0$, 则方程 $F(x,y,z)=0$ 在点 $(x_0,y_0,z_0)$
+    的某一邻域内恒能唯一确定一个连续且具有连续偏导数的函数 $z=f(x,y)$, 它满足条件 $z_0=f(x_0,y_0)$,
+    并有
+    \[
+        \frac{{\rm d}z}{{\rm d}x}=-\frac{F_x}{F_z},\quad\frac{{\rm d}z}{{\rm d}y}=-\frac{F_y}{F_z}.
+    \]
+\end{thm_impl}
+
+\begin{thm_impl}
+    设 $F(x,y,u,v)$ 与 $G(x,y,u,v)$ 在点 $P(x_0,y_0,u_0,v_0)$ 的某一邻域内具有对各个变量的连续
+    偏导数, 又 $F(x_0,y_0,u_0,v_0)=0$, $G(x_0,y_0,u_0,v_0)=0$, 且偏导数所组成的函数行列式
+    \[
+        J=\pdif{(F,G)}{(u,v)}=\begin{vmatrix}
+            \pdif{F}{u} & \pdif{F}{v} \\
+            \pdif{G}{u} & \pdif{G}{v}
+        \end{vmatrix}
+    \]
+    在点 $P(x_0,y_0,u_0,v_0)$ 不等于零, 则方程组 $F(x_0,y_0,u_0,v_0)=0$, $G(x_0,y_0,u_0,v_0)=0$
+    在点 $(x_0,y_0,u_0,v_0)$ 的某一邻域内恒能唯一确定一组连续且具有连续偏导数的函数 $u=u(x,y)$,
+    $v=v(x,y)$, 它们满足条件 $u_0=u(x_0,y_0)$, $v_0=v(x_0,y_0)$, 并有
+    \marginpar{\vspace{1em}这里使用了\uline{克莱姆法则}.}
+    \begin{align*}
+        \pdif{u}{x}=-\frac{1}{J}\pdif{(F,G)}{(x,v)}=-\frac{\begin{vmatrix}F_x&F_v\\G_x&G_v\end{vmatrix}}{\begin{vmatrix}F_u&F_v\\G_u&G_v\end{vmatrix}},\quad
+        \pdif{v}{x}=-\frac{1}{J}\pdif{(F,G)}{(u,x)}=-\frac{\begin{vmatrix}F_u&F_x\\G_u&G_x\end{vmatrix}}{\begin{vmatrix}F_u&F_v\\G_u&G_v\end{vmatrix}}, \\
+        \pdif{u}{y}=-\frac{1}{J}\pdif{(F,G)}{(y,v)}=-\frac{\begin{vmatrix}F_y&F_v\\G_y&G_v\end{vmatrix}}{\begin{vmatrix}F_u&F_v\\G_u&G_v\end{vmatrix}},\quad
+        \pdif{v}{y}=-\frac{1}{J}\pdif{(F,G)}{(u,y)}=-\frac{\begin{vmatrix}F_u&F_y\\G_u&G_y\end{vmatrix}}{\begin{vmatrix}F_u&F_v\\G_u&G_v\end{vmatrix}}.
+    \end{align*}
+\end{thm_impl}
+
+\subsection{多元函数微分学的几何应用}
+
+\subsubsection*{参数方程确定的空间曲线}
+
+曲线 $\begin{cases}x=\varphi(t)\\y=\psi(t)\\z=\omega(t)\end{cases}$ 在 $t_0$ 处的切向量为
+$\big(\varphi'(t),\psi'(t),\omega'(t)\big)$.
+
+\subsubsection*{方程组确定的空间曲线}
+
+曲线 $\begin{cases}F(x,y,u,v)=0\\G(x,y,u,v)=0\end{cases}$ 在点 $M$ 处的切向量为
+$\left(\begin{vmatrix}F_y&F_z\\G_y&G_z\end{vmatrix}_M,\begin{vmatrix}F_z&F_x\\G_z&G_x\end{vmatrix}_M,\begin{vmatrix}F_x&F_y\\G_x&G_y\end{vmatrix}_M\right)$.
+
+\subsubsection*{空间平面}
+
+曲面 $F(x,y,z)=0$ 在 $(x_0,y_0,z_0)$ 的法向量为
+$\big(F_x(x_0,y_0,z_0),F_y(x_0,y_0,z_0),F_z(x_0,y_0,z_0)\big)$;
+
+曲面 $z=f(x,y)$ 在 $(x_0,y_0)$ 向下的法向量为
+$\big(F_x(x_0,y_0),F_y(x_0,y_0),-1\big)$.
+
+\subsection{方向导数与梯度}
+
+\begin{thm}
+    如果函数 $f(x,y)$ 在点 $P_0(x_0,y_0)$ 可微分, 那么函数在该点沿任一方向 $l$ 的 方向导数存在, 且有
+    \begin{align*}
+        \pdif{f}{l}\bigg|_{(x_0,y_0)} & =f_x(x_0,y_0)\cos\alpha+f_y(x_0,y_0)\cos\beta \\
+                                      & =\nabla f(x_0,y_0)\cdot\vec{e}_l.
+    \end{align*}
+    其中 $\nabla=\pdif{}{x}\vec{i}+\pdif{}{y}\vec{j}$ 称为(二维)\uline{向量微分算子}, 向量 $\nabla f(x_0,y_0)=f_x(x_0,y_0)\vec{i}+f_y(x_0,y_0)\vec{j}$
+    称为函数 $f(x,y)$ 在点 $P_0(x_0,y_0)$ 的梯度.
+\end{thm}
+
+\begin{attn}
+    若 $P_0(x_0,y_0)$ 是某个二元函数 $f(x,y)$ 一条等值线 $f(x,y)=c$ 上的一点, 则等值线在点 $P_0$ 处的单位法向量为
+    \[
+        \vec{n}=\frac{\nabla f(x_0,y_0)}{\lvert\nabla f(x_0,y_0)\rvert}.
+    \]
+    类似地, 一个三元函数 $f(x,y,z)$ 的某个等值面在 $P_0(x_0,y_0,z_0)$ 处的单位法向量为
+    \[
+        \vec{n}=\frac{\nabla f(x_0,y_0,z_0)}{\lvert\nabla f(x_0,y_0,z_0)\rvert}.
+    \]
+\end{attn}
+
+\subsection{多元函数的极值及其求法}
+
+\begin{thm}[极值充分条件]
+    设函数 $z=f(x,y)$ 在点 $(x_0,y_0)$ 的某邻域内连续且有一阶及二阶连续偏导数, 又 $f_x(x_0,y_0)=0$, $f_y(x_0,y_0)=0$, 令
+    $f_{xx}(x_0,y_0)=A$, $f_{xy}(x_0,y_0)=B$, $f_{yy}(x_0,y_0)=C$, 则:
+    \begin{enumerate}[(1)]
+        \item $AC-B^2>0$ 时有极值, 且当 $A<0$ 时有极大值, $A>0$ 时有极小值;
+        \item $AC-B^2<0$ 时无极值;
+        \item $AC-B^2=0$ 时不能确定有没有极值.
+    \end{enumerate}
+\end{thm}
+
+使用\uline{拉格朗日乘数法}求条件极值的一般步骤:
+\begin{enumerate}
+    \item 创建拉格朗日函数 $L=F+\lambda\varphi+\mu\psi+\cdots$, 其中 $\lambda$, $\mu$ 等为系数, $F$ 为要求极值的函数,
+          $\varphi$, $\psi$ 等为恒等于零的约束条件;
+    \item 分别作方程 $L=0$ 对 $L$ 各参数的偏导数, 并与各约束条件联立方程组;
+    \item 用 $L$ 各参数表示 $\lambda$ 和 $\mu$ 等系数.
+\end{enumerate}
+
+\begin{attn}
+    不论使用何种方法, 最后都需要将得到的点代回原方程(组), 判断其是否确实为极值点.
+\end{attn}
+
+\begin{exmp}
+    形状为椭球 $4x^2+y^2+4z^2\leq16$ 的空间探测器进入地球大气层, 其表面开始受热, 一小时后在探测器的点 $(x,y,z)$ 处的温度
+    $T=8x^2+4yz-16z+600$, 求探测器表面最热的点.
+
+    作拉格朗日函数
+    \[
+        L=8x^2+4yz-16z+600+\lambda(4x^2+y^2+4z^2-16).
+    \]
+    令
+    \[
+        \begin{cases}
+            L_x=16x+8\lambda x=0,   \\
+            L_y=4z+2\lambda y=0,    \\
+            L_z=4y-16+8\lambda z=0. \\
+        \end{cases}
+    \]
+    由 $L_x$ 得, $\lambda=-2$ 或 $x=0$. $\lambda=-2$ 的情况可得出可能的极值点
+    $M_1(-\frac{4}{3},-\frac{4}{3},-\frac{4}{3})$ 和 $M_2(\frac{4}{3},-\frac{4}{3},-\frac{4}{3})$;
+    $x=0$ 的情况可解出 $\lambda=-\sqrt{3}$, $\lambda=\sqrt{3}$ 和 $\lambda=0$ 三种情况, 分别得出可能的极值点
+    $M_3(0,-2,-\sqrt{3})$, $M_4(0,-2,\sqrt{3})$ 和 $M_5(0,4,0)$.
+
+    经比较得, 最热的点为 $M_1$ 和 $M_2$.
+\end{exmp}
+
+\section{重积分}
+
+\subsection{二重积分的概念和性质}
+
+\begin{thm}[二重积分的中值定理]
+    设函数 $f(x,y)$ 在闭区域 $D$ 上连续, $\sigma$ 是 $D$ 的面积, 则在 $D$ 上至少存在一点 $(\xi,\eta)$, 使得
+    \[
+        \iint_Df(x,y)\,{\rm d}\sigma=f(\xi,\eta)\sigma.
+    \]
+\end{thm}
+
+\subsection{二重积分的计算法}
+
+\begin{exmp}
+    计算 $\iint_Dx\cos(x+y)\,{\rm d}\sigma$, 其中 $D$ 是顶点分别为 $(0,0)$, $(\pi,0)$ 和 $(\pi,\pi)$ 的三角形闭区域.
+    \marginpar{\vspace{10em}分部积分法.}
+    \begin{align*}
+         & \iint_Dx\cos(x+y)\,{\rm d}\sigma                                                                        \\
+         & =\int_0^\pi x\,{\rm d}x\int_0^x\cos(x+y)\,{\rm d}y                                                      \\
+         & =\int_0^\pi x(\sin 2x-\sin x)\,{\rm d}y                                                                 \\
+         & = \int_0^\pi x\,{\rm d}\left(\cos x-\frac{1}{2}\cos2x\right)                                            \\
+         & =\left(x\left(\cos x-\frac{1}{2}\cos2x\right)\right)_0^\pi-\int_0^\pi\cos x-\frac{1}{2}\cos2x\,{\rm d}x \\
+         & =-\frac{3}{2}\pi.
+    \end{align*}
+\end{exmp}
+
+\begin{exmp}
+    积分区域 $D$ 为 $\big\{(x,y)\mid0\leq y\leq1-x,0\leq x\leq1\big\}$. 将 $\iint_Df(x,y)\,{\rm d}x{\rm d}y$
+    表示为极坐标形式的二次积分.
+
+    根据两坐标系之间的关系, $x+y=1$ 可直接转换为 $\rho=\frac{1}{\sin\theta+\cos\theta}$, 从而所求表达式为
+    \[
+        \int_0^{\frac{\pi}{2}}{\rm d}\theta\int_0^{\frac{1}{\sin\theta+\cos\theta}}f(x,y)\rho\,{\rm d}\rho.
+    \]
+\end{exmp}
+
+\pagebreak
+
+\begin{exmp}
+    将 $\int_0^a{\rm d}x\int_0^x\sqrt{x^2+y^2}\,{\rm d}y$ 表示为极坐标形式的二次积分, 并计算.
+    \marginpar{\vspace{7.5em}此不定积分的求解步骤可参考附录A.}
+    \begin{align*}
+         & \int_0^a{\rm d}x\int_0^x\sqrt{x^2+y^2}\,{\rm d}y                                            \\
+         & =\int_0^{\frac{\pi}{4}}{\rm d}\theta\int_0^{a\sec\theta}\rho^2\,{\rm d}\rho                 \\
+         & =\frac{a^3}{3}\int_0^{\frac{\pi}{4}}\sec^3\theta\,{\rm d}\theta                             \\
+         & =\frac{a^3}{6}\big(\sec\theta\,\tan\theta+\ln(\sec\theta+\tan\theta)\big)_0^{\frac{\pi}{4}} \\
+         & =\frac{a^3}{6}\Big(\sqrt{2}+\ln\big(\sqrt{2}+1\big)\Big).
+    \end{align*}
+\end{exmp}
+
+\subsection{三重积分}
+
+\begin{exmp}
+    利用球面坐标计算 $\iiint_\Omega z\,{\rm d}v$, 其中闭区域 $\Omega$ 由不等式 $x^2+y^2+(z-a)^2\leq a^2$,
+    $x^2+y^2\leq z^2$ 所确定.
+    \begin{align*}
+        \iiint_\Omega z\,{\rm d}v & = \int_0^{2\pi}{\rm d}\theta\int_0^{\frac{\pi}{4}}\sin\varphi\,{\rm d}\varphi\int_0^{2a\cos\varphi}r^3\cos\varphi\,{\rm d}r \\
+                                  & =8\pi a^4\int_0^{\frac{\pi}{4}}\cos^5\varphi\,\sin\varphi\,{\rm d}\varphi=\frac{7\pi}{6}a^4.
+    \end{align*}
+\end{exmp}
+
+\subsection{重积分的应用}
+
+曲面 $z=f(x,y)$ 的面积元素为 $\sqrt{1+f_x^2(x,y)+f_y^2(x,y)}\,{\rm d}\sigma$.
+
+\section{曲线积分与曲面积分}
+
+\subsection{对弧长的曲线积分}
+
+\begin{thm}
+    参数方程为 $\begin{cases}x=\varphi(t)\\y=\psi(t)\end{cases}(\alpha\leq\beta)$ 的曲线 $L$ 的曲线积分为
+    \[
+        \int_Lf(x,y)\,{\rm d}s=\int_\alpha^\beta f\big(\varphi(t),\psi(t)\big)\sqrt{\varphi'^2(t)+\psi'^2(t)}\,{\rm d}t.
+    \]
+\end{thm}
+
+\begin{exmp}
+    计算半径为 $R$, 中心角为 $2\alpha$ 的圆弧 $L$ 对于它的对称轴的转动惯量 $I$ (线密度 $\mu=1$).
+
+    首先将 $L$ 用参数方程表示 $\begin{cases}x=R\cos\theta\\y=R\sin\theta\end{cases}(-\alpha\leq\theta\leq\alpha)$.
+    \marginpar{\vspace{6em}二倍角公式.}
+    \begin{align*}
+        I & =\int_Ly^2\,{\rm d}s\int_{-\alpha}^\alpha(R\sin\theta)^2\mu R\,{\rm d}\theta                \\
+          & =2R^3\int_0^\alpha\sin^2\theta\,{\rm d}\theta=R^3\int_0^\alpha1-\cos2\theta\,{\rm d}\theta  \\
+          & =R^3\left(\theta-\frac{1}{2}\sin2\theta\right)_0^\alpha=R^3(\alpha-\sin\alpha\,\cos\alpha).
+    \end{align*}
+\end{exmp}
+
+\subsection{对坐标的曲线积分}
+
+\begin{thm}
+    参数方程为 $\begin{cases}x=\varphi(t)\\y=\psi(t)\end{cases}$ 的曲线 $L$ 的曲线积分为
+    \begin{align*}
+         & \int_LP(x,y)\,{\rm d}x+Q(x,y)\,{\rm d}y                                                                      \\
+         & =\int_\alpha^\beta P\big(\varphi(t),\psi(t)\big)\varphi'(t)+Q\big(\varphi(t),\psi(t)\big)\psi'(t)\,{\rm d}t.
+    \end{align*}
+\end{thm}
+
+\subsection*{两类曲线积分之间的关系}
+
+平面曲线弧 $L$ 上的两类曲线积分之间有如下联系:
+\[
+    \int_\Gamma P\,{\rm d}x+Q\,{\rm d}y+R\,{\rm d}z=\int_\Gamma(P\cos\alpha+Q\cos\beta+R\cos\gamma)\,{\rm d}s
+\]
+或
+\[
+    \int_\Gamma\vec{A}\cdot{\rm d}\vec{r}=\int_\Gamma\vec{A}\cdot\vec{\tau}\,{\rm d}s.
+\]
+其中 $\vec{A}=(P,Q,R)$, $\vec{\tau}=(\cos\alpha,\cos\beta,\cos\gamma)$ 为有向曲线弧 $\Gamma$ 在点 $(x,y,z)$ 处的
+单位切向量, ${\rm d}\vec{r}=\vec{\tau}{\rm d}s=({\rm d}x,{\rm d}y,{\rm d}z)$, 称为\uline{有向曲线元}.
+
+\subsection{格林公式及其应用}
+
+\begin{thm}[格林公式]
+    设闭区域 $D$ 由分段光滑的曲线 $L$ 围成, 若函数 $P(x,y)$ 与 $Q(x,y)$ 在 $D$ 上具有一阶连续偏导数, 则有
+    \[
+        \iint_D\left(\pdif{Q}{x}-\pdif{P}{y}\right)=\oint_LP{\rm d}x+Q{\rm d}y.
+    \]
+\end{thm}
+
+\begin{attn}
+    设有闭区域 $D$. 取 $P=-y$, $Q=x$, 即得
+    \[
+        2\iint_D{\rm d}x{\rm d}y=\oint_Lx{\rm d}y-y{\rm d}x.
+    \]
+    上式左端是闭区域 $D$ 面积的两倍, 因此闭区域 $D$ 的面积为
+    \[
+        \frac{1}{2}\oint_Lx{\rm d}y-y{\rm d}x.
+    \]
+\end{attn}
+
+\begin{exmp}
+    利用曲线积分, 求星形线 $x=a\cos^3t,\;y=a\sin^3t$ 所围成图形的面积.
+
+    令面积为 $S$, 星形线为 $L$, 则
+    \begin{align*}
+        S & =\frac{1}{2}\oint_Lx{\rm d}y-y{\rm d}x=\frac{3a^2}{2}\int_0^{2\pi}\sin^2t\,\cos^2t\,{\rm d}t \\
+          & =\frac{3a^2}{16}\int_0^{2\pi}1-\cos4t\,{\rm d}t=\frac{3\pi}{8}a^2.
+    \end{align*}
+\end{exmp}
+
+\subsubsection*{二元函数的全微分求积}
+
+\begin{exmp}
+    确定常数 $\lambda$, 使在右半平面 $x>0$ 上的向量
+    $\vec{A}(x,y)=2xy(x^4+y^2)^\lambda\vec{i}-x^2(x^4+y^2)^\lambda\vec{j}$ 为某二元函数 $u(x,y)$ 的梯度,
+    并求 $u(x,y)$.
+
+    令 $P=2xy(x^4+y^2)^\lambda,\;Q=-x^2(x^4+y^2)^\lambda$, 利用 $\pdif{P}{y}=\pdif{Q}{x}$ 得出
+    $\lambda=-1$, 过程略.
+
+    取 $(x_0,y_0)=(1,0)$, 得
+    \begin{align*}
+        u(x,y) & =0+\int_0^y\frac{-x^2}{x^4+y^2}\,{\rm d}y \\
+               & =-\arctan\frac{y}{x^2}.
+    \end{align*}
+\end{exmp}
+
+\subsection{对坐标的曲面积分}
+
+\begin{exmp}
+    计算曲面积分 $\iint_\Sigma xyz\,{\rm d}x{\rm d}y$, 其中 $\Sigma$ 是球面 $x^2+y^2+z^2=1$ 外侧在
+    $x\geq0,\;y\geq0,\;z\geq0$ 的部分.
+    \marginpar{\vspace{10.5em}令 $u=1-\rho^2$.}
+    \begin{align*}
+        \iint_\Sigma xyz\,{\rm d}x{\rm d}y & =\iint_{D_{xy}}xy\sqrt{1-x^2-y^2}\,{\rm d}x{\rm d}y                                                              \\
+                                           & =\int_0^{\frac{\pi}{2}}{\rm d}\theta\int_0^1\frac{1}{2}\sin2\theta\,\rho^3\sqrt{1-\rho^2}\,{\rm d}\rho           \\
+                                           & =\frac{1}{2}\int_0^1\rho^3\sqrt{1-\rho^2}\,{\rm d}\rho=\frac{1}{4}\int_0^1\rho^2\sqrt{1-\rho^2}\,{\rm d}(\rho^2) \\
+                                           & =\frac{1}{4}\int_0^1(1-u)\sqrt{u}\,{\rm d}u=\frac{1}{15}.
+    \end{align*}
+\end{exmp}
+
+\begin{exmp}
+    计算曲面积分 $\iint_\Sigma(z^2+x)\,{\rm d}y{\rm d}z-z\,{\rm d}x{\rm d}y$, 其中 $\Sigma$ 是旋转曲面
+    $z=\frac{1}{2}(x^2+y^2)$ 介于平面 $z=0$ 及 $z=2$ 之间的部分的下侧.
+
+    设 $(\cos\alpha,\cos\beta,\cos\gamma)$ 为平面 $\Sigma$ 上点 $(x,y,z)$ 处的单位法向量, 则
+    \[
+        {\rm d}y{\rm d}z=\cos\alpha\,S=\frac{\cos\alpha}{\cos\gamma}\,{\rm d}x{\rm d}y.
+    \]
+    之后便可将原式转为形如 $\iint_{D_{xy}}(\ldots)\,{\rm d}x{\rm d}y$ 的重积分, 具体过程略.
+\end{exmp}
+
+\begin{attn}
+    使用高斯公式时需确保曲面 $\Sigma$ 为封闭曲面. 如不是, 可添加部分曲面使其封闭, 之后减去其积分值.
+\end{attn}
+
+\subsubsection*{两类曲面积分之间的关系}
+
+设 $\vec{A}=(P,Q,R)$, $\vec{n}=(\cos\alpha,\cos\beta,\cos\gamma)$ 为有向曲面 $\Sigma$ 在点 $(x,y,z)$ 处的单位法向量,
+则两类曲面积分之间的关系可表示为
+\[
+    \iint_\Sigma\vec{A}\cdot{\rm d}\vec{S}=\iint_\Sigma\vec{A}\cdot\vec{n}\,{\rm d}S.
+\]
+其中 ${\rm d}\vec{S}=\vec{n}S=({\rm d}y{\rm d}z,{\rm d}z{\rm d}x,{\rm d}y{\rm d}z)$ 称为\uline{有向曲面元}.
+
+\subsection{高斯公式}
+
+\begin{thm}
+    设空间闭区域 $\Omega$ 是由分片光滑的闭曲面 $\Sigma$ 所围成, 若函数 $P(x,y,z)$, $Q(x,y,z)$, $R(x,y,z)$ 在 $\Omega$
+    上有一阶连续偏导数, 则有
+    \[
+        \iiint_\Omega\left(\pdif{P}{x}+\pdif{Q}{y}+\pdif{R}{z}\right){\rm d}v=\oiint_\Sigma P\,{\rm d}y{\rm d}z+Q\,{\rm d}z{\rm d}x+R\,{\rm d}x{\rm d}y,
+    \]
+    或
+    \[
+        \iiint_\Omega\left(\pdif{P}{x}+\pdif{Q}{y}+\pdif{R}{z}\right){\rm d}v=\oiint_\Sigma(P\cos\alpha+Q\cos\beta+R\cos\gamma)\,{\rm d}S.
+    \]
+\end{thm}
+
+\pagebreak
+
+\section*{附录}
+
+\subsection*{A. 有关三角函数的不定积分}
+
+\begin{equation}
+    \int\sec^3x\,{\rm d}x=\frac{1}{2}\big(\sec x\tan x+\ln \lvert\sec x+\tan x\rvert\big)+C.
+\end{equation}
+\begin{prof}
+    \begin{align*}
+        \int\sec^3x{\rm d}x & =\int\sec x\,\sec^2x\,{\rm d}x=\int\sec x\,{\rm d}(\tan x) \\
+                            & =\sec x\tan x-\int\tan x\,(\sec x\tan x)\,{\rm d}x         \\
+                            & =\sec x\tan x-\int\sec x\tan^2x\,{\rm d}x                  \\
+                            & =\sec x\tan x-\int\sec x\,(\sec^2x-1)\,{\rm d}x            \\
+                            & =\sec x\tan x-\int\sec^3x\,{\rm d}x+\int\sec x\,{\rm d}x.
+    \end{align*}
+    移项后可得出上述结果.
+\end{prof}
+
+\begin{equation}
+    \int\frac{1}{a^2+x^2}\,{\rm d}x=\frac{1}{a}\arctan\frac{x}{a}.
+\end{equation}
+
+\end{document}
