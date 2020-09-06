@@ -276,8 +276,8 @@ $\big(F_x(x_0,y_0),F_y(x_0,y_0),-1\big)$.
     \marginpar{\vspace{10em}分部积分法.}
     \begin{align*}
          & \iint_Dx\cos(x+y)\,{\rm d}\sigma                                                                        \\
-         & =\int_0^\pi x\,{\rm d}x\int_0^x\cos(x+y)\,{\rm d}y                                                      \\
-         & =\int_0^\pi x(\sin 2x-\sin x)\,{\rm d}y                                                                 \\
+         & =\int_0^\pi x\,{\rm d}x\int_0^x\cos(x+y)\,{\rm d}x                                                      \\
+         & =\int_0^\pi x(\sin 2x-\sin x)\,{\rm d}x                                                                 \\
          & = \int_0^\pi x\,{\rm d}\left(\cos x-\frac{1}{2}\cos2x\right)                                            \\
          & =\left(x\left(\cos x-\frac{1}{2}\cos2x\right)\right)_0^\pi-\int_0^\pi\cos x-\frac{1}{2}\cos2x\,{\rm d}x \\
          & =-\frac{3}{2}\pi.
@@ -340,7 +340,7 @@ $\big(F_x(x_0,y_0),F_y(x_0,y_0),-1\big)$.
     首先将 $L$ 用参数方程表示 $\begin{cases}x=R\cos\theta\\y=R\sin\theta\end{cases}(-\alpha\leq\theta\leq\alpha)$.
     \marginpar{\vspace{6em}二倍角公式.}
     \begin{align*}
-        I & =\int_Ly^2\,{\rm d}s\int_{-\alpha}^\alpha(R\sin\theta)^2\mu R\,{\rm d}\theta                \\
+        I & =\int_Ly^2\,{\rm d}s=\int_{-\alpha}^\alpha(R\sin\theta)^2\mu R\,{\rm d}\theta                \\
           & =2R^3\int_0^\alpha\sin^2\theta\,{\rm d}\theta=R^3\int_0^\alpha1-\cos2\theta\,{\rm d}\theta  \\
           & =R^3\left(\theta-\frac{1}{2}\sin2\theta\right)_0^\alpha=R^3(\alpha-\sin\alpha\,\cos\alpha).
     \end{align*}
@@ -360,7 +360,7 @@ $\big(F_x(x_0,y_0),F_y(x_0,y_0),-1\big)$.
 
 平面曲线弧 $L$ 上的两类曲线积分之间有如下联系:
 \[
-    \int_\Gamma P\,{\rm d}x+Q\,{\rm d}y+R\,{\rm d}z=\int_\Gamma(P\cos\alpha+Q\cos\beta+R\cos\gamma)\,{\rm d}s
+    \int_\Gamma P{\rm d}x+Q{\rm d}y+R{\rm d}z=\int_\Gamma(P\cos\alpha+Q\cos\beta+R\cos\gamma)\,{\rm d}s
 \]
 或
 \[
@@ -374,7 +374,7 @@ $\big(F_x(x_0,y_0),F_y(x_0,y_0),-1\big)$.
 \begin{thm}[格林公式]
     设闭区域 $D$ 由分段光滑的曲线 $L$ 围成, 若函数 $P(x,y)$ 与 $Q(x,y)$ 在 $D$ 上具有一阶连续偏导数, 则有
     \[
-        \iint_D\left(\pdif{Q}{x}-\pdif{P}{y}\right)=\oint_LP{\rm d}x+Q{\rm d}y.
+        \iint_D\left(\pdif{Q}{x}-\pdif{P}{y}\right){\rm d}v=\oint_LP{\rm d}x+Q{\rm d}y.
     \]
 \end{thm}
 
@@ -452,7 +452,7 @@ $\big(F_x(x_0,y_0),F_y(x_0,y_0),-1\big)$.
 \[
     \iint_\Sigma\vec{A}\cdot{\rm d}\vec{S}=\iint_\Sigma\vec{A}\cdot\vec{n}\,{\rm d}S.
 \]
-其中 ${\rm d}\vec{S}=\vec{n}S=({\rm d}y{\rm d}z,{\rm d}z{\rm d}x,{\rm d}y{\rm d}z)$ 称为\uline{有向曲面元}.
+其中 ${\rm d}\vec{S}=\vec{n}{\rm d}S=({\rm d}y{\rm d}z,{\rm d}z{\rm d}x,{\rm d}y{\rm d}z)$ 称为\uline{有向曲面元}.
 
 \subsection{高斯公式}
 
