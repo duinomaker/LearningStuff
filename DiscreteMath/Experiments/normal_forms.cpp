@@ -12,6 +12,7 @@ private:
 
 public:
     Wff(const string& wff)
+        : vars(0)
     {
         int letters[26] {};
         deque<char> temp;
@@ -60,25 +61,21 @@ public:
     {
         /* evaluate the WFF with truth values specified by the binary bits in `index` */
         deque<bool> temp;
-        bool op1, op2;
+        bool operand;
         for (auto it = symbols.cbegin(), it_ = symbols.cend(); it != it_; ++it) {
             switch (*it) {
             case '~':
                 temp.back() = !temp.back();
                 break;
             case '^':
-                op2 = temp.back();
+                operand = temp.back();
                 temp.pop_back();
-                op1 = temp.back();
-                temp.pop_back();
-                temp.push_back(op1 && op2);
+                temp.back() = temp.back() && operand;
                 break;
             case 'v':
-                op2 = temp.back();
+                operand = temp.back();
                 temp.pop_back();
-                op1 = temp.back();
-                temp.pop_back();
-                temp.push_back(op1 || op2);
+                temp.back() = temp.back() || operand;
                 break;
             default:
                 temp.push_back((1 << (vars - 1 - letter2index(*it))) & index);
@@ -109,13 +106,13 @@ private:
     }
 };
 
-void print_a_term(int vars, uint64_t index, const string& alphabet, bool major = false)
+void print_a_term(int vars, int index, const string& alphabet, bool is_major)
 {
     /* print a minor/major term with letters taken from the alphabet */
-    char op = major ? 'v' : '^';
+    const char op = is_major ? 'v' : '^';
     cout << "(";
-    for (uint64_t i = 1 << (vars - 1), j = 0; j != vars; i >>= 1, ++j) {
-        if ((major && !(index & i)) || (!major && (index & i)))
+    for (int i = 1 << (vars - 1), j = 0; j != vars; i >>= 1, ++j) {
+        if ((is_major && !(index & i)) || (!is_major && (index & i)))
             cout << "~";
         cout << alphabet[j];
         if (i != 1)
@@ -132,15 +129,16 @@ void read_a_truth_table(string& truth_values)
         flag = false;
         cout << "\nPlease input your truth table (e.g. `TFFFFTFT`): " << flush;
         cin >> truth_values;
-        int size = truth_values.length();
-        while (!(size & 1))
-            size >>= 1;
-        if (size != 1) {
+        const int size = truth_values.length();
+        int temp = size;
+        while (!(temp & 1))
+            temp >>= 1;
+        if (temp != 1) {
             cout << "[Error]\tLength of your truth table is not the power of 2" << endl;
             flag = true;
             continue;
         }
-        for (int i = truth_values.length() - 1; i != -1; --i) {
+        for (int i = size - 1; i != -1; --i) {
             char c = truth_values.at(i);
             if (c != 'T' && c != 'F') {
                 cout << "[Error]\tYour truth table contains invalid characters" << endl;
@@ -154,20 +152,20 @@ void read_a_truth_table(string& truth_values)
 void truth_table2norm(const string& truth_values, const string& alphabet = "PQRSTUVWXYZABCDEFGHIJKLMNO")
 {
     /* print out normal forms given a truth table and an alphabet */
-    int size, temp, vars = 0;
-    size = temp = truth_values.length();
+    const int size = truth_values.length();
+    int temp = size, vars = 0;
     while (temp >>= 1)
         ++vars;
     cout << "\nPrincipal disjunctive normal form:\n";
-    for (uint64_t i = 0, i_ = size, n = 0; i != i_; ++i) {
+    for (int i = 0, i_ = size, n = 0; i != i_; ++i) {
         if (truth_values.at(i) == 'T') {
             if (n++)
                 cout << "v";
-            print_a_term(vars, i, alphabet);
+            print_a_term(vars, i, alphabet, false);
         }
     }
     cout << "\n\nPrincipal conjunctive normal form:\n";
-    for (uint64_t i = 0, i_ = size, n = 0; i != i_; ++i) {
+    for (int i = 0, i_ = size, n = 0; i != i_; ++i) {
         if (truth_values.at(i) == 'F') {
             if (n++)
                 cout << "^";
@@ -188,7 +186,7 @@ void main_truth_table2norm()
 void main_wff2norm()
 {
     string wff_string;
-    cout << "\n[Hint]\tUse `^` for conjunction, `v` for disjunction, and `~` for negation\n"
+    cout << "\n[Hint]\tUse `^` for conjunction, `v` for disjunction, and `~` for negation\n\n"
          << "Please input your WFF (e.g. `(A^~B)v(QvPv~A)`): " << flush;
     cin >> wff_string;
     Wff wff(wff_string);

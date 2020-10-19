@@ -5,3 +5,7 @@
 *.fdb_latexmk
 *.fls
 *.synctex(busy)
+__latexindent_temp.tex
+
+# Visual Studio Code auxilary files
+.vscode
