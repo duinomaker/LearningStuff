@@ -131,10 +131,10 @@ void read_a_truth_table(string& truth_values)
         cin >> truth_values;
         const int size = truth_values.length();
         int temp = size;
-        while (!(temp & 1))
+        while (temp && !(temp & 1))
             temp >>= 1;
-        if (temp != 1) {
-            cout << "[Error]\tLength of your truth table is not the power of 2" << endl;
+        if (size < 2 || temp != 1) {
+            cout << "[Error]\tLength of your truth table is not a positive integral power of 2" << endl;
             flag = true;
             continue;
         }
