@@ -122,8 +122,14 @@
 \end{proof}
 
 \begin{exmp}
-	证明: 如果$c_1,c_2,\ldots,c_{\phi(m)}$ 是模 $m$ 的简化剩余系, 那么 $c_1+c_2+\cdots+c_{\phi(m)}\equiv 0\pmod m$.
+	证明: 如果$c_1,c_2,\ldots,c_{\phi(m)}$ 是模 $m$ 的简化剩余系, 其中 $m\geq 3$, 那么 $c_1+c_2+\cdots+c_{\phi(m)}\equiv 0\pmod m$.
 \end{exmp}
+\begin{proof}
+	如果 $c$ 在 $m$ 的简化剩余系中, 那么 $n-c$ 也在 $m$ 的简化剩余系中, 因为 $(c,n)=(n-c,n)$.
+	但是不可能出现 $c=n-c$ 的情况, 否则 $2c=n$, 则 $(c,n)=c$, 不符合 $c$ 与 $n$ 互质的要求. 所以,
+	可以将简化剩余系中 $c_i$ 和 $n-c_i$ 两两配对, 使各对中两个元素的和为 $n$, 进而使所有元素的总和
+	与 $0$ 模 $m$ 同余.
+\end{proof}
 
 \begin{exmp}
 	设 $p$ 是奇素数, $k$ 是正整数. 证明: 同余式 $x^2\equiv 1\pmod{p^k}$ 正好有两个不同余的解 $x\equiv\pm 1\pmod{p^k}$.
