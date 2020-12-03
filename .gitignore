@@ -9,3 +9,6 @@ __latexindent_temp.tex
 
 # Visual Studio Code auxilary files
 .vscode
+
+# Other files
+.DS_Store
