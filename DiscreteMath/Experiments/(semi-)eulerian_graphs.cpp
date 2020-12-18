@@ -10,42 +10,53 @@
 class Graph {
 public:
     using edge_type = std::pair<std::size_t, std::size_t>;
+    using edges_type = std::list<edge_type>;
     using adj_mat_type = std::vector<std::vector<bool>>;
     using path_type = std::list<std::size_t>;
     using paths_type = std::list<path_type>;
 
-    explicit Graph(adj_mat_type mat, std::size_t edge_count) :
-            mat(std::move(mat)), edges(edge_count) {}
-
-    static Graph from_edges(std::size_t vertices, const std::vector<edge_type> &edges) {
-        adj_mat_type mat(vertices, std::vector<bool>(vertices, false));
-        std::size_t edge_count = 0;
-        for (const Graph::edge_type &e: edges) {
-            mat[e.first][e.second] = true;
-            mat[e.second][e.first] = true;
-        }
-        for (std::size_t i = 0; i != vertices; ++i) {
-            for (std::size_t j = i + 1; j != vertices; ++j) {
-                if (mat[i][j]) {
-                    ++edge_count;
+    explicit Graph(adj_mat_type mat_to_move) : mat(std::move(mat_to_move)), edges(0) {
+        for (std::size_t u = 0; u != mat.size(); ++u) {
+            for (std::size_t v = u + 1; v != mat.size(); ++v) {
+                if (mat[u][v]) {
+                    ++edges;
                 }
             }
         }
-        return Graph(mat, edge_count);
     }
+
+    static Graph from_edges(std::size_t vertices, const edges_type &edges) {
+        adj_mat_type mat(vertices, std::vector<bool>(vertices, false));
+        for (const auto &e: edges) {
+            mat[e.first][e.second] = true;
+            mat[e.second][e.first] = true;
+        }
+        return Graph(mat);
+    }
+
+    static void print_paths(const paths_type &paths) {
+        for (const auto &path: paths) {
+            std::size_t count = 0;
+            for (std::size_t v: path) {
+                std::cout << v + 1 << (++count != path.size() ? "-" : "");
+            }
+            std::cout << '\n';
+        }
+        std::cout << std::flush;
+    };
 
     std::size_t count_degree(std::size_t v) const {
-        std::size_t degree = 0;
+        static std::vector<std::size_t> memory(mat.size(), -1);
+        if (memory[v] != -1) {
+            return memory[v];
+        }
+        memory[v] = 0;
         for (size_t j = 0; j != mat.size(); ++j) {
             if (mat[v][j]) {
-                ++degree;
+                ++memory[v];
             }
         }
-        return degree;
-    }
-
-    inline std::size_t edge_count() const {
-        return edges;
+        return memory[v];
     }
 
     bool is_connected() const {
@@ -53,15 +64,15 @@ public:
         std::function<void(std::size_t)> dfs =
                 [this, &dfs, &visited](std::size_t u) {
                     visited[u] = true;
-                    for (std::size_t v = 0; v != edges; ++v) {
+                    for (std::size_t v = 0; v != mat.size(); ++v) {
                         if (!visited[v] && mat[u][v]) {
                             dfs(v);
                         }
                     }
                 };
         dfs(0);
-        for (std::size_t i = 0; i != mat.size(); ++i) {
-            if (!visited[i]) {
+        for (std::size_t v = 0; v != mat.size(); ++v) {
+            if (!visited[v]) {
                 return false;
             }
         }
@@ -72,14 +83,8 @@ public:
         if (!is_connected()) {
             return false;
         }
-        for (size_t i = 0; i != mat.size(); ++i) {
-            std::size_t degree = 0;
-            for (size_t j = 0; j != mat.size(); ++j) {
-                if (mat[i][j]) {
-                    ++degree;
-                }
-            }
-            if (degree % 2) {
+        for (size_t v = 0; v != mat.size(); ++v) {
+            if (count_degree(v) % 2) {
                 return false;
             }
         }
@@ -92,8 +97,7 @@ public:
         }
         std::size_t odd_count = 0;
         for (size_t v = 0; v != mat.size(); ++v) {
-            std::size_t degree = count_degree(v);
-            if (degree % 2) {
+            if (count_degree(v) % 2) {
                 if (++odd_count > 2) {
                     return false;
                 }
@@ -148,7 +152,7 @@ Graph input() {
     std::getline(std::cin, line);
     std::istringstream(line) >> vertices;
     std::size_t first, second;
-    std::vector<Graph::edge_type> edges;
+    Graph::edges_type edges;
     std::cout << "The program accepts edges separated by lines, for example\n"
                  "1 2\n"
                  "2 3\n"
@@ -178,23 +182,12 @@ Graph input() {
 
 int main() {
     Graph graph = input();
-    std::function<void(const Graph::paths_type &)> print_paths =
-            [&graph](const Graph::paths_type &paths) {
-                for (const Graph::path_type &path: paths) {
-                    std::size_t count = 0;
-                    for (std::size_t v: path) {
-                        std::cout << v + 1 << (count++ != graph.edge_count() ? "-" : "");
-                    }
-                    std::cout << '\n';
-                }
-                std::cout << std::flush;
-            };
     if (graph.is_eulerian()) {
         std::cout << "The graph is an Eulerian graph.\n\nEulerian loops:\n" << std::flush;
-        print_paths(graph.eulerian_paths());
+        Graph::print_paths(graph.eulerian_paths());
     } else if (graph.is_semi_eulerian()) {
         std::cout << "The graph is a semi-Eulerian graph.\n\nEulerian paths:\n" << std::flush;
-        print_paths(graph.eulerian_paths());
+        Graph::print_paths(graph.eulerian_paths());
     } else {
         std::cout << "The graph is not a semi-Eulerian graph.\n" << std::flush;
     }
