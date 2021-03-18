@@ -208,21 +208,15 @@ impl fmt::Display for Polynomial {
             Cons(head, tail) => {
                 if head.is_zero() {
                     write!(f, "{}", tail)
+                } else if tail.is_first_negative() {
+                    write!(f, "{}{}", head, tail)
+                } else if let Nil = **tail {
+                    write!(f, "{}", head)
                 } else {
-                    if tail.is_first_negative() {
-                        write!(f, "{}{}", head, tail)
-                    } else {
-                        if let Nil = **tail {
-                            write!(f, "{}", head)
-                        } else {
-                            write!(f, "{}+{}", head, tail)
-                        }
-                    }
+                    write!(f, "{}+{}", head, tail)
                 }
             }
-            Nil => {
-                write!(f, "")
-            }
+            Nil => write!(f, "")
         }
     }
 }
@@ -530,28 +524,33 @@ fn evaluate(postfix: &Vec<Symbol>) -> Result<Polynomial, &'static str> {
     }
 }
 
-fn evaluate_and_print(raw: &str) {
+fn evaluate_and_print(raw: &str) -> Result<Polynomial, String> {
+    let preprocessed;
     match preprocess(&raw) {
-        Ok(preprocessed) => {
-            match tokenize(&preprocessed) {
-                Ok(infix) => {
-                    match shunting_yard(&infix) {
-                        Ok(postfix) => {
-                            match evaluate(&postfix) {
-                                Ok(result) => {
-                                    println!("{}", result);
-                                }
-                                Err(err) =>
-                                    println!("[Error] Evaluator: {}", err)
-                            }
-                        }
-                        Err(err) => println!("[Error] Parser: {}", err)
-                    }
-                }
-                Err(err) => println!("[Error] Lexer: {}", err)
-            }
+        Ok(result) => { preprocessed = result }
+        Err(error) => {
+            return Err(format!("Preprocessor: {}", error));
         }
-        Err(err) => println!("[Error] Preprocessor: {}", err)
+    }
+    let infix;
+    match tokenize(&preprocessed) {
+        Ok(result) => { infix = result }
+        Err(error) => {
+            return Err(format!("Lexer: {}", error));
+        }
+    }
+    let postfix;
+    match shunting_yard(&infix) {
+        Ok(result) => { postfix = result }
+        Err(error) => {
+            return Err(format!("Parser: {}", error));
+        }
+    }
+    match evaluate(&postfix) {
+        Ok(result) => Ok(result),
+        Err(error) => {
+            Err(format!("Evaluator: {}", error))
+        }
     }
 }
 
@@ -563,8 +562,11 @@ fn main() {
         io::stdout().flush().unwrap();
         io::stdin()
             .read_line(&mut input)
-            .unwrap();
-        evaluate_and_print(&input);
+            .expect("[Error] Failed to read line");
+        match evaluate_and_print(&input) {
+            Ok(result) => println!("{}", result),
+            Err(error) => println!("[Error] {}", error)
+        }
         input.clear();
     }
 }
