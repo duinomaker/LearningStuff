@@ -26,10 +26,10 @@ impl PolynomialTerm {
 
 impl fmt::Display for PolynomialTerm {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut result = String::new();
         if self.coefficient == 0 {
             return write!(f, "");
         }
+        let mut result = String::new();
         if self.coefficient != 1 || self.exponent == 0 {
             result.push_str(&*format!("{}", self.coefficient));
         }
