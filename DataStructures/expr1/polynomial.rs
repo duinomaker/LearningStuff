@@ -168,7 +168,7 @@ impl Polynomial {
 
     fn is_constant(&self) -> bool {
         if let Cons(head, tail) = self {
-            if head.coefficient == 0 && head.exponent != 0 {
+            if head.coefficient != 0 && head.exponent != 0 {
                 false
             } else {
                 tail.is_constant()
