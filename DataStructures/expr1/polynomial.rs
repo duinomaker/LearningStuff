@@ -272,7 +272,6 @@ impl PartialEq for Symbol {
 }
 
 fn preprocess(raw: &str) -> Result<Vec<u8>, &'static str> {
-    let raw_bytes = raw.as_bytes();
     let mut result = vec![b'('];
     fn is_in(ch: &u8, valid: &[u8]) -> bool {
         for valid_ch in valid.iter() {
@@ -282,8 +281,18 @@ fn preprocess(raw: &str) -> Result<Vec<u8>, &'static str> {
         }
         false
     }
+    fn filter_whitespace(raw: &[u8]) -> Vec<u8> {
+        let mut result = Vec::new();
+        for ch in raw {
+            if !ch.is_ascii_whitespace() {
+                result.push(ch.clone());
+            }
+        }
+        result
+    }
+    let bytes = filter_whitespace(raw.as_bytes());
     let mut paren_count = 0;
-    for (i, ch) in raw_bytes.iter().enumerate() {
+    for (i, ch) in bytes.iter().enumerate() {
         if ch.is_ascii_whitespace() {
             continue;
         }
@@ -299,10 +308,10 @@ fn preprocess(raw: &str) -> Result<Vec<u8>, &'static str> {
             return Err("invalid characters");
         }
         result.push(*ch);
-        if i + 1 != raw_bytes.len() && (
-            (raw_bytes[i + 1] == b'x' && (*ch == b'x' || ch.is_ascii_digit()))
-                || (raw_bytes[i + 1] == b'(' && !is_in(ch, b"+-*^"))
-                || (*ch == b')' && !is_in(&raw_bytes[i + 1], b"+-*^"))) {
+        if i + 1 != bytes.len()
+            && ((bytes[i + 1] == b'x' && (*ch == b'x' || ch.is_ascii_digit()))
+            || (!is_in(ch, b"+-*^(") && bytes[i + 1] == b'(')
+            || (*ch == b')' && !is_in(&bytes[i + 1], b"+-*^)"))) {
             result.push(b'*');
         }
     }
