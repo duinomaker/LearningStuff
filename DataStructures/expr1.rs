@@ -92,9 +92,7 @@ impl Polynomial {
                     Some(Cons(term.clone(), Box::new(Cons(head, tail))))
                 }
             }
-            Nil => {
-                Some(Cons(term.clone(), Box::new(Nil)))
-            }
+            Nil => Some(Cons(term.clone(), Box::new(Nil)))
         }
     }
 
@@ -291,8 +289,7 @@ fn preprocess(raw: &str) -> Result<Vec<u8>, &'static str> {
         }
         if *ch == b'(' {
             paren_count += 1;
-        }
-        if *ch == b')' {
+        } else if *ch == b')' {
             if paren_count == 0 {
                 return Err("unmatched parentheses");
             }
@@ -408,8 +405,7 @@ fn evaluate(postfix: &Vec<Symbol>) -> Result<Polynomial, &'static str> {
     for sym in postfix.iter() {
         match sym {
             Symbol::NUMBER(num_str) => {
-                let result = num_str.parse::<i128>();
-                if let Ok(num) = result {
+                if let Ok(num) = num_str.parse::<i128>() {
                     stack.push(Polynomial::new_constant(num));
                 } else {
                     return Err("numbers too large to parse");
