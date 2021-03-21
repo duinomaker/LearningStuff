@@ -1,230 +1,15 @@
+mod polynomial;
+use std::cmp::Ordering;
 use std::io;
 use std::io::Write;
-use std::fmt;
-use std::cmp::Ordering;
-use crate::Polynomial::*;
+use polynomial::*;
 
-#[derive(Clone)]
-struct PolynomialTerm {
-    coefficient: i128,
-    exponent: i128,
-}
-
-impl PolynomialTerm {
-    fn new_constant(coefficient: i128) -> PolynomialTerm {
-        PolynomialTerm { coefficient, exponent: 0 }
-    }
-
-    fn new_x() -> PolynomialTerm {
-        PolynomialTerm { coefficient: 1, exponent: 1 }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.coefficient == 0
-    }
-}
-
-impl fmt::Display for PolynomialTerm {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.coefficient == 0 {
-            return write!(f, "");
-        }
-        let mut result = String::new();
-        if self.coefficient != 1 || self.exponent == 0 {
-            result.push_str(&*format!("{}", self.coefficient));
-        }
-        if self.exponent == 0 {
-            return write!(f, "{}", result);
-        }
-        result.push('x');
-        if self.exponent < 0 {
-            result.push_str(&*format!("^({})", self.exponent));
-        } else if self.exponent > 1 {
-            result.push_str(&*format!("^{}", self.exponent));
-        }
-        write!(f, "{}", result)
-    }
-}
-
-#[derive(Clone)]
-enum Polynomial {
-    Cons(PolynomialTerm, Box<Polynomial>),
-    Nil,
-}
-
-impl Polynomial {
-    fn new() -> Polynomial {
-        Nil
-    }
-
-    fn new_constant(coefficient: i128) -> Polynomial {
-        let mut result = Polynomial::new();
-        result = result.add_a_term(&PolynomialTerm::new_constant(coefficient))
-            .unwrap();
-        result
-    }
-
-    fn new_x() -> Polynomial {
-        let mut result = Polynomial::new();
-        result = result.add_a_term(&PolynomialTerm::new_x())
-            .unwrap();
-        result
-    }
-
-    fn add_a_term(self, term: &PolynomialTerm) -> Option<Polynomial> {
-        match self {
-            Cons(mut head, tail) => {
-                if term.exponent == head.exponent {
-                    if let Some(num) = head.coefficient
-                        .checked_add(term.coefficient) {
-                        head.coefficient = num;
-                        Some(Cons(head, tail))
-                    } else {
-                        None
-                    }
-                } else if term.exponent > head.exponent {
-                    if let Some(result) = tail.add_a_term(term) {
-                        Some(Cons(head, Box::new(result)))
-                    } else {
-                        None
-                    }
-                } else {
-                    Some(Cons(term.clone(), Box::new(Cons(head, tail))))
-                }
-            }
-            Nil => Some(Cons(term.clone(), Box::new(Nil)))
-        }
-    }
-
-    fn add_a_polynomial(mut self, poly: &Polynomial) -> Option<Polynomial> {
-        if let Cons(head, tail) = poly {
-            if let Some(result) = self.add_a_term(head) {
-                self = result;
-            } else {
-                return None;
-            }
-            if let Some(result) = self.add_a_polynomial(tail) {
-                self = result;
-            } else {
-                return None;
-            }
-        }
-        Some(self)
-    }
-
-    fn multiply_a_term(self, term: &PolynomialTerm) -> Option<Polynomial> {
-        match self {
-            Cons(mut head, mut tail) => {
-                if let Some(num) = head.coefficient
-                    .checked_mul(term.coefficient) {
-                    head.coefficient = num;
-                } else {
-                    return None;
-                }
-                if let Some(num) = head.exponent
-                    .checked_add(term.exponent) {
-                    head.exponent = num;
-                } else {
-                    return None;
-                }
-                if let Some(result) = tail.multiply_a_term(term) {
-                    *tail = result;
-                } else {
-                    return None;
-                }
-                Some(Cons(head, tail))
-            }
-            Nil => Some(Nil)
-        }
-    }
-
-    fn multiply_a_polynomial(self, poly: &Polynomial) -> Option<Polynomial> {
-        let mut result = Polynomial::new();
-        let mut poly = poly;
-        while let Cons(head, tail) = poly {
-            let mut temp = self.clone();
-            if let Some(res) = temp.multiply_a_term(&head) {
-                temp = res;
-            } else {
-                return None;
-            }
-            if let Some(res) = result.add_a_polynomial(&temp) {
-                result = res;
-            } else {
-                return None;
-            }
-            poly = tail;
-        }
-        Some(result)
-    }
-
-    fn is_first_negative(&self) -> bool {
-        if let Cons(head, _tail) = self {
-            head.coefficient < 0
-        } else {
-            false
-        }
-    }
-
-    fn is_constant(&self) -> bool {
-        if let Cons(head, tail) = self {
-            if head.coefficient != 0 && head.exponent != 0 {
-                false
-            } else {
-                tail.is_constant()
-            }
-        } else {
-            true
-        }
-    }
-
-    fn constant(&self) -> Option<i128> {
-        if let Cons(head, tail) = self {
-            if head.exponent == 0 {
-                if let Some(num) = tail.constant() {
-                    if let Some(result) = head.coefficient
-                        .checked_add(num) {
-                        Some(result)
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            } else {
-                tail.constant()
-            }
-        } else {
-            Some(0)
-        }
-    }
-}
-
-impl fmt::Display for Polynomial {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Cons(head, tail) => {
-                if head.is_zero() {
-                    write!(f, "{}", tail)
-                } else if tail.is_first_negative() {
-                    write!(f, "{}{}", head, tail)
-                } else if let Nil = **tail {
-                    write!(f, "{}", head)
-                } else {
-                    write!(f, "{}+{}", head, tail)
-                }
-            }
-            Nil => write!(f, "")
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq)]
+#[derive(Clone, Eq)]
 enum Symbol {
     LParen,
     RPAREN,
     NUMBER(String),
-    X,
+    VAR(u8),
     POSITIVE,
     NEGATIVE,
     PLUS,
@@ -273,6 +58,9 @@ impl PartialEq for Symbol {
 
 fn preprocess(raw: &str) -> Result<Vec<u8>, &'static str> {
     let mut result = vec![b'('];
+    fn is_valid(ch: &u8) -> bool {
+        ch.is_ascii_alphanumeric() || is_in(ch, b"+-*^()")
+    }
     fn is_in(ch: &u8, valid: &[u8]) -> bool {
         for valid_ch in valid.iter() {
             if ch == valid_ch {
@@ -304,19 +92,20 @@ fn preprocess(raw: &str) -> Result<Vec<u8>, &'static str> {
             }
             paren_count -= 1;
         }
-        if !is_in(ch, b"x0123456789+-*^()") {
+        if !is_valid(ch) {
             return Err("invalid characters");
         }
         result.push(*ch);
         if i + 1 != bytes.len()
-            && ((bytes[i + 1] == b'x' && (*ch == b'x' || ch.is_ascii_digit()))
+            && ((bytes[i + 1].is_ascii_alphabetic()
+            && (ch.is_ascii_alphabetic() || ch.is_ascii_digit()))
             || (!is_in(ch, b"+-*^(") && bytes[i + 1] == b'(')
             || (*ch == b')' && !is_in(&bytes[i + 1], b"+-*^)"))) {
             result.push(b'*');
         }
     }
-    result.push(b')');
     if paren_count == 0 {
+        result.push(b')');
         Ok(result)
     } else {
         Err("unmatched parentheses")
@@ -342,7 +131,6 @@ fn tokenize(raw: &[u8]) -> Result<Vec<Symbol>, &'static str> {
             let sym = match ch {
                 b'(' => Symbol::LParen,
                 b')' => Symbol::RPAREN,
-                b'x' => Symbol::X,
                 b'+' => {
                     if raw[idx - 1] == b'(' {
                         Symbol::POSITIVE
@@ -359,9 +147,7 @@ fn tokenize(raw: &[u8]) -> Result<Vec<Symbol>, &'static str> {
                 }
                 b'*' => Symbol::TIMES,
                 b'^' => Symbol::EXPONENT,
-                _ => {
-                    return Err("invalid characters");
-                }
+                var => Symbol::VAR(var)
             };
             result.push(sym);
             idx += 1;
@@ -376,7 +162,7 @@ fn shunting_yard(infix: &Vec<Symbol>) -> Result<Vec<Symbol>, &'static str> {
     for sym in infix.iter() {
         let sym = (*sym).clone();
         match sym {
-            Symbol::NUMBER(_) | Symbol::X => output.push(sym),
+            Symbol::NUMBER(_) | Symbol::VAR(_) => output.push(sym),
             Symbol::LParen => operators.push(sym),
             Symbol::POSITIVE | Symbol::PLUS |
             Symbol::NEGATIVE | Symbol::MINUS |
@@ -420,8 +206,8 @@ fn evaluate(postfix: &Vec<Symbol>) -> Result<Polynomial, &'static str> {
                     return Err("numbers too large to parse");
                 }
             }
-            Symbol::X => {
-                stack.push(Polynomial::new_x());
+            Symbol::VAR(var) => {
+                stack.push(Polynomial::new_var(*var));
             }
             Symbol::NEGATIVE => {
                 if stack.is_empty() {
