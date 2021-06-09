@@ -10,16 +10,19 @@ open System.Text.RegularExpressions
 
 module ZF =
 
-    type Client() =
+    type Client () =
         let mutable id = ""
-        let mutable client = new WebClient()
-        let mutable cookieContainer = CookieContainer()
+        let mutable client = new WebClient ()
+        let mutable cookieContainer = CookieContainer ()
 
-        member this.UpdateCookies() =
+        member this.UpdateCookies () =
             let cookies = client.ResponseHeaders.Get "Set-Cookie"
 
             if cookies <> null then
-                cookieContainer.SetCookies(System.Uri "http://jwxt.njupt.edu.cn", cookies)
+                cookieContainer.SetCookies (
+                    System.Uri "http://jwxt.njupt.edu.cn",
+                    cookies
+                )
 
         member this.CookieString =
             System.Uri "http://jwxt.njupt.edu.cn/"
@@ -32,7 +35,7 @@ module ZF =
                 System.Uri "http://jwxt.njupt.edu.cn/CheckCode.aspx"
                 |> client.DownloadData
 
-            this.UpdateCookies()
+            this.UpdateCookies ()
             callback bytes
 
         member this.Login id' password code =
@@ -40,18 +43,18 @@ module ZF =
             let url = "http://jwxt.njupt.edu.cn/default2.aspx"
 
             let data =
-                $"__VIEWSTATE=dDwxNTMxMDk5Mzc0Ozs%%2BRyHxH2kXFD%%2B/obehGIlm7rWAdYo=&txtUserName={id'}&Textbox1=&TextBox2={
-                                                                                                                               password
+                $"__VIEWSTATE=dDwxNTMxMDk5Mzc0Ozs%%2BRyHxH2kXFD%%2B/obehGIlm7rWAdYo=&txtUserName={id'
+                }&Textbox1=&TextBox2={password
                 }&txtSecretCode={code}&RadioButtonList1=%%D1%%A7%%C9%%FA&Button1=&lbLanguage=&hidPdrs=&hidsc="
                 |> Encoding.ASCII.GetBytes
 
-            client.Headers.Set("Content-Type", "application/x-www-form-urlencoded")
-            client.Headers.Set("Cookie", this.CookieString)
+            client.Headers.Set ("Content-Type", "application/x-www-form-urlencoded")
+            client.Headers.Set ("Cookie", this.CookieString)
 
             let response =
-                client.UploadData(System.Uri url, "POST", data)
+                client.UploadData (System.Uri url, "POST", data)
 
-            this.UpdateCookies()
+            this.UpdateCookies ()
 
             Encoding.RegisterProvider CodePagesEncodingProvider.Instance
 
@@ -59,30 +62,32 @@ module ZF =
                 (Encoding.GetEncoding "gb2312").GetString response
 
             match html.Contains "欢迎您" with
-            | true -> Ok()
-            | false -> Error()
+            | true -> Ok ()
+            | false -> Error ()
 
-        member this.GetClassroomPage() =
+        member this.ClassroomPage callback =
             let url =
                 $"http://jwxt.njupt.edu.cn/xxjsjy.aspx?xh={id}&gnmkdm=N121611"
 
             let referer =
                 $"http://jwxt.njupt.edu.cn/xs_main.aspx?xh={id}"
 
-            client.Headers.Set("Content-Type", "application/x-www-form-urlencoded")
-            client.Headers.Set("Cookie", this.CookieString)
-            client.Headers.Add("Referer", referer)
+            client.Headers.Set ("Content-Type", "application/x-www-form-urlencoded")
+            client.Headers.Set ("Cookie", this.CookieString)
+            client.Headers.Add ("Referer", referer)
 
-            let response = client.DownloadData(System.Uri url)
-            this.UpdateCookies()
+            let response = client.DownloadData (System.Uri url)
+            this.UpdateCookies ()
 
-            (Encoding.GetEncoding "gb2312").GetString response
+            let html = (Encoding.GetEncoding "gb2312").GetString response
 
-        member this.GetEmptyClassrooms() =
+            callback html
+
+        member this.EmptyClassrooms html callback =
             let url =
                 $"http://jwxt.njupt.edu.cn/xxjsjy.aspx?xh={id}&gnmkdm=N121611"
 
-            let html = this.GetClassroomPage()
+            let referer = url
 
             let viewstate =
                 (Regex """name="__VIEWSTATE" value="([^"]+)""")
@@ -119,38 +124,47 @@ module ZF =
                 |> HttpUtility.UrlEncode
 
             let term =
-                Regex.Matches(html, """id="xq"[^s]+selected="selected" value="([0-9])">""", RegexOptions.Multiline)
+                Regex.Matches (html, """id="xq"[^s]+selected="selected" value="([0-9])">""", RegexOptions.Multiline)
                 |> fun mc -> [ for i in mc -> i ] |> List.head
                 |> fun m -> m.Groups.[1].Value
 
             let data =
-                $"__EVENTTARGET=&__EVENTARGUMENT=&__VIEWSTATE={viewstate}&xiaoq=&jslb=&min_zws=0&max_zws=&kssj={day}&jssj={
-                                                                                                                               day
-                }&xqj={weekday}&ddlDsz={parity}&sjd={interval}&Button2=%%BF%%D5%%BD%%CC%%CA%%D2%%B2%%E9%%D1%%AF&xn={
-                                                                                                                        years
+                $"__EVENTTARGET=&__EVENTARGUMENT=&__VIEWSTATE={viewstate
+                }&xiaoq=&jslb=&min_zws=0&max_zws=&kssj={day}&jssj={day
+                }&xqj={weekday}&ddlDsz={parity}&sjd={interval
+                }&Button2=%%BF%%D5%%BD%%CC%%CA%%D2%%B2%%E9%%D1%%AF&xn={years
                 }&xq={term}&ddlSyXn={years}&ddlSyxq={term}"
                 |> Encoding.ASCII.GetBytes
 
-            client.Headers.Set("Content-Type", "application/x-www-form-urlencoded")
-            client.Headers.Set("Cookie", this.CookieString)
-            client.Headers.Add("Referer", url)
+            client.Headers.Set ("Content-Type", "application/x-www-form-urlencoded")
+            client.Headers.Set ("Cookie", this.CookieString)
+            client.Headers.Add ("Referer", url)
 
             let response =
-                client.UploadData(System.Uri url, "POST", data)
+                client.UploadData (System.Uri url, "POST", data)
 
-            this.UpdateCookies()
+            this.UpdateCookies ()
 
             Encoding.RegisterProvider CodePagesEncodingProvider.Instance
-            (Encoding.GetEncoding "gb2312").GetString response
+            let html = (Encoding.GetEncoding "gb2312").GetString response
 
-        member this.GetEmptyClassroomList() =
-            let html = this.GetEmptyClassrooms()
+            callback html
 
-            (Regex """<td>((:?教[0-9]|教东|教西|无|锁金－).+?)</td>""")
-                .Matches html
-            |> fun mc -> [ for i in mc -> i ]
-            |> List.map (fun m -> m.Groups.[1].Value)
-            |> List.reduce (fun a b -> $"{a}\n{b}")
+        member this.EmptyClassroomList html callback =
+            let result =
+                (Regex """<td>((:?教[0-9]|教东|教西|无|锁金－).+?)</td>""")
+                    .Matches html
+                |> fun mc -> [ for i in mc -> i ]
+                |> List.map (fun m -> m.Groups.[1].Value)
+
+            callback result
+
+        member this.GetEmptyClassroomList callback =
+            this.ClassroomPage (fun classroomPage ->
+                this.EmptyClassrooms classroomPage (fun emptyClassrooms ->
+                    this.EmptyClassroomList emptyClassrooms callback
+                )
+            )
 
 module App =
 
@@ -164,28 +178,28 @@ module App =
         { userStat: UserStat
           client: ZF.Client
           codeImage: byte []
-          pageContent: string }
+          pageContent: string list }
 
     type Msg =
-        | RequestNewCodeImage
+        | RequestCodeImage
         | UpdateCodeImage of byte []
         | LoginClicked of string * string * string
         | LoginSuccess
         | AuthError
-        | UpdatePageContent of string
+        | UpdatePageContent of string list
 
-    let newCodeImage (client: ZF.Client) =
+    let requestCodeImage (client: ZF.Client) =
         async {
-            do! Async.SwitchToThreadPool()
+            do! Async.SwitchToThreadPool ()
             let mutable bytes = Array.empty
-            client.GetCodeImage(fun bytes' -> bytes <- bytes')
+            client.GetCodeImage (fun bytes' -> bytes <- bytes')
             return UpdateCodeImage bytes
         }
         |> Cmd.ofAsyncMsg
 
     let authUser (client: ZF.Client) id password code =
         async {
-            do! Async.SwitchToThreadPool()
+            do! Async.SwitchToThreadPool ()
             let result = client.Login id password code
 
             return
@@ -195,40 +209,54 @@ module App =
         }
         |> Cmd.ofAsyncMsg
 
-    let updatePageContent (client: ZF.Client) =
+    let requestPageContent (client: ZF.Client) =
         async {
-            do! Async.SwitchToThreadPool()
-            let content = client.GetEmptyClassroomList()
-            return UpdatePageContent content
+            do! Async.SwitchToThreadPool ()
+            let mutable result = []
+            client.GetEmptyClassroomList (
+                fun result' -> result <- result'
+            )
+            return UpdatePageContent result
         }
         |> Cmd.ofAsyncMsg
 
     let init () =
-        let client = ZF.Client()
+        let client = ZF.Client ()
 
         { userStat = Waiting
           client = client
           codeImage = Array.empty
-          pageContent = "" },
-        newCodeImage client
+          pageContent = [] },
+        requestCodeImage client
 
     let update msg model =
         match msg with
-        | RequestNewCodeImage -> { model with codeImage = Array.empty }, newCodeImage model.client
-        | UpdateCodeImage bytes -> { model with codeImage = bytes }, Cmd.none
+        | RequestCodeImage ->
+            { model with
+                  codeImage = Array.empty },
+            requestCodeImage model.client
+        | UpdateCodeImage bytes ->
+            { model with
+                  codeImage = bytes },
+            Cmd.none
         | LoginClicked (id, password, code) ->
-            { model with userStat = LoggingIn }, authUser model.client id password code
+            { model with
+                  userStat = LoggingIn },
+            authUser model.client id password code
         | LoginSuccess ->
             { model with
                   userStat = LoggedIn
-                  pageContent = "正在查询……" },
-            updatePageContent model.client
+                  pageContent = [ "正在查询……" ] },
+            requestPageContent model.client
         | AuthError ->
             { model with
                   userStat = AuthFailed
                   codeImage = Array.empty },
-            newCodeImage model.client
-        | UpdatePageContent content -> { model with pageContent = content }, Cmd.none
+            requestCodeImage model.client
+        | UpdatePageContent content ->
+            { model with
+                  pageContent = content },
+            Cmd.none
 
     let loginPage model dispatch =
         let loginForm =
@@ -237,38 +265,44 @@ module App =
             let mutable code = ""
 
             let idEntryCell =
-                View.Entry(
+                View.Entry (
                     maxLength = 32,
                     placeholder = "学号",
-                    textChanged = fun textArgs -> id <- textArgs.NewTextValue
+                    textChanged = fun textArgs ->
+                        id <- textArgs.NewTextValue
                 )
 
             let passwordEntryCell =
-                View.Entry(
+                View.Entry (
                     isPassword = true,
                     maxLength = 20,
                     placeholder = "密码",
-                    textChanged = fun textArgs -> password <- textArgs.NewTextValue
+                    textChanged = fun textArgs ->
+                        password <- textArgs.NewTextValue
                 )
 
             let codeEntryCell =
-                View.Entry(
+                View.Entry (
                     maxLength = 8,
                     placeholder = "验证码",
-                    textChanged = fun textArgs -> code <- textArgs.NewTextValue
+                    textChanged = fun textArgs ->
+                        code <- textArgs.NewTextValue
                 )
 
             let codeImageCell =
-                View.Button(
+                View.Button (
                     image = Image.Value.ImageBytes model.codeImage,
-                    command =
-                        fun () ->
-                            if model.codeImage.Length <> 0 then
-                                RequestNewCodeImage |> dispatch
+                    command = fun () ->
+                        if model.codeImage.Length <> 0 then
+                            RequestCodeImage |> dispatch
                 )
 
             let loginButton =
-                View.Button(text = "登录", command = fun () -> LoginClicked(id, password, code) |> dispatch)
+                View.Button (
+                    text = "登录",
+                    command = fun () ->
+                        LoginClicked (id, password, code) |> dispatch
+                )
 
             [ idEntryCell
               passwordEntryCell
@@ -276,11 +310,14 @@ module App =
               codeImageCell
               loginButton ]
 
-        View.ContentPage(
-            View.StackLayout(
+        View.ContentPage (
+            View.StackLayout (
                 match model.userStat with
-                | Waiting -> [ View.Label "请登录"; yield! loginForm ]
-                | LoggingIn -> [ View.Label "正在登录……" ]
+                | Waiting ->
+                    [ View.Label "请登录"
+                      yield! loginForm ]
+                | LoggingIn ->
+                    [ View.Label "正在登录……" ]
                 | AuthFailed ->
                     [ View.Label "登录失败，请重试"
                       yield! loginForm ]
@@ -289,7 +326,14 @@ module App =
         )
 
     let classroomPage model dispatch =
-        View.ContentPage(View.StackLayout([ View.Label model.pageContent ]))
+        View.ContentPage (
+            View.StackLayout [
+                View.ListView (
+                    model.pageContent
+                    |> List.map (fun text -> View.TextCell text)
+                )
+            ]
+        )
 
     let view model dispatch =
         let page =
@@ -299,8 +343,8 @@ module App =
 
         page model dispatch
 
-type App() as app =
-    inherit Application()
+type App () as app =
+    inherit Application ()
 
     let runner =
         Program.mkProgram App.init App.update App.view
