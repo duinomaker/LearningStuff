@@ -138,7 +138,7 @@ module ZF =
 
             client.Headers.Set ("Content-Type", "application/x-www-form-urlencoded")
             client.Headers.Set ("Cookie", this.CookieString)
-            client.Headers.Add ("Referer", url)
+            client.Headers.Add ("Referer", referer)
 
             let response =
                 client.UploadData (System.Uri url, "POST", data)
