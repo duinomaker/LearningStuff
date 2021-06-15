@@ -1,6 +1,6 @@
 Require Import Setoid.
 
-(* Natural Numbers, Lists, and Reflection *)
+(* Natural Numbers *)
 
 Reserved Notation "x =? y" (at level 70).
 
@@ -86,34 +86,6 @@ Proof.
   - intros. rewrite n_plus_Sm_Sn_plus_m.
     rewrite <- IH. reflexivity. Qed.
 
-Inductive list (X : Type) : Type :=
-| nil
-| cons (x : X) (l : list X).
-
-Arguments nil {X}.
-Arguments cons {X}.
-
-Notation "[ ]" := nil.
-Notation "x :: y" := (cons x y) (at level 60, right associativity).
-Notation "[ x ; .. ; y ]" := (cons x .. (cons y []) ..).
-Notation "x ++ y" := (app x y) (at level 60, right associativity).
-
-Fixpoint length {X} (l : list X) : nat :=
-  match l with
-  | nil => O
-  | _ :: l' => S (length l')
-  end.
-
-Inductive reflect (P : Prop) : bool -> Prop :=
-| ReflectT : P -> reflect P true
-| ReflectF : ~ P -> reflect P false.
-
-Theorem iff_reflect : forall P b, (P <-> b = true) -> reflect P b.
-Proof.
-  intros P b H. destruct b eqn:Eb.
-  - apply ReflectT. rewrite H. reflexivity.
-  - apply ReflectF. rewrite H. discriminate. Qed.
-
 (* Binary Trees and Lengths *)
 
 Inductive btree (X : Type) : Type :=
@@ -168,55 +140,7 @@ Example test_non_leaf_count2 :
   non_leaf_count {{{},2,{}},1,{{{},4,{}},3,{}}} = 4.
 Proof. reflexivity. Qed.
 
-(* Descend into a Binary Tree *)
-
-Inductive dir : Type :=
-| Left
-| Right.
-
-Fixpoint ld_proper {X} (t : btree X) (ld : list dir) : bool :=
-  match t, ld with
-  | {}, [] => true
-  | {l,x,r}, h :: ld' =>
-    match h with
-    | Left => ld_proper l ld'
-    | Right => ld_proper r ld'
-    end
-  | _, _ => false
-  end.
-
-Fixpoint extend_leaf {X} (t : btree X) (ld : list dir) (x' : X) : btree X :=
-  match t with
-  | {} => {{},x',{}}
-  | {l,x,r} =>
-    match ld with
-    | [] => {l,x,r}  (* avoid extending non-leaf nodes *)
-    | h :: ld' =>
-      match h with
-      | Left => {extend_leaf l ld' x',x,r}
-      | Right => {l,x,extend_leaf r ld' x'}
-      end
-    end
-  end.
-
-Example test_extend_leaf1 :
-  extend_leaf {} [] 1 = {{},1,{}}.
-Proof. reflexivity. Qed.
-
-Example test_extend_leaf2 :
-  extend_leaf {{{},2,{}},1,{{},3,{}}} [Right; Left] 4 =
-  {{{},2,{}},1,{{{},4,{}},3,{}}}.
-Proof. reflexivity. Qed.
-
-Example test_extend_leaf3 :
-  extend_leaf {{{},2,{}},1,{{},3,{}}} [Right; Left; Right] 4 =
-  {{{},2,{}},1,{{{},4,{}},3,{}}}.
-Proof. reflexivity. Qed.
-
-Example test_extend_leaf4 :
-  extend_leaf {{{},2,{}},1,{{},3,{}}} [Right] 4 =
-  {{{},2,{}},1,{{},3,{}}}.
-Proof. reflexivity. Qed.
+(* Lemmas and the Theorem *)
 
 Lemma internal_length_S : forall n X (t : btree X),
     internal_length t n + non_leaf_count t =
@@ -268,59 +192,13 @@ Proof.
       rewrite plus_assoc. rewrite plus_assoc.
       rewrite plus_assoc. reflexivity. Qed.
 
-Definition eqb_leaf {X} (t : btree X) : bool :=
-  external_length t 0 =? 0.
-
-Lemma leaf_eqb_eq : forall X (t : btree X),
-    t = {} <-> eqb_leaf t = true.
-Proof.
-  split.
-  - intro H. rewrite H. reflexivity.
-  - unfold eqb_leaf. intro H. apply eqb_eq in H.
-    induction t as [| l IHl x r IHr].
-    + reflexivity.
-    + simpl in H. rewrite <- external_length_S in H.
-      discriminate H. Qed.
-
-Theorem leaf_eqP : forall X (t : btree X),
-    reflect (t = {}) (eqb_leaf t).
-Proof.
-  intros. apply iff_reflect. apply leaf_eqb_eq. Qed.
-
-Lemma non_leaf_is_extended : forall X (t : btree X),
-    ~ (t = {}) ->
-    exists t' ld x', ld_proper t' ld = true /\ t = extend_leaf t' ld x'.
-Proof.
-  induction t as [| l IHl x r IHr].
-  - intros contra. exfalso. apply contra. reflexivity.
-  - intros _. destruct (leaf_eqP _ l).
-    + destruct (leaf_eqP _ r).
-      * exists {}. exists []. exists x. simpl. rewrite H. rewrite H0.
-        split; reflexivity.
-      * apply IHr in H0. destruct H0 as [t' [ld [x' H0]]].
-        exists {l,x,t'}. exists (Right :: ld). exists x'.
-        simpl. destruct H0 as [H0 H1]. rewrite H0. rewrite H1.
-        split; reflexivity.
-    + apply IHl in H. destruct H as [t' [ld [x' H]]].
-      exists {t',x,r}. exists (Left :: ld). exists x'.
-      simpl. destruct H as [H0 H1]. rewrite H0. rewrite H1.
-      split; reflexivity. Qed.
-
-(* The Theorem *)
-
 (* Too many `rewrite`-s! Can't Coq resolve equalities automatically? *)
 Theorem the_theorem : forall X (t : btree X),
     external_length t 0 = internal_length t 0 + double (non_leaf_count t).
 Proof.
   induction t as [| l IHl x r IHr].
   - reflexivity.
-  - remember {l,x,r} as t eqn:Et. assert (Ht: ~ ({l,x,r} = {})).
-    { intro contra. discriminate contra. }
-    apply non_leaf_is_extended in Ht. destruct Ht as [t' [ld [x' Ht]]].
-    destruct Ht as [Hld Ht]. rewrite Et. simpl.
-    remember (external_length t' 0) as nex eqn:Eex.
-    remember (internal_length t' 0) as nin eqn:Ein.
-    remember (non_leaf_count t') as n eqn:En.
+  - simpl.
     rewrite double_destruct in IHl. rewrite plus_assoc in IHl.
     rewrite (internal_length_S 0) in IHl.
     rewrite double_destruct in IHr. rewrite plus_assoc in IHr.
@@ -363,3 +241,121 @@ Proof.
       rewrite plus_assoc. reflexivity. Qed.
 
 Print Assumptions the_theorem.
+
+(* UNUSED Definitions and Lemmas *)
+
+Inductive list (X : Type) : Type :=
+| nil
+| cons (x : X) (l : list X).
+
+Arguments nil {X}.
+Arguments cons {X}.
+
+Notation "[ ]" := nil.
+Notation "x :: y" := (cons x y) (at level 60, right associativity).
+Notation "[ x ; .. ; y ]" := (cons x .. (cons y []) ..).
+Notation "x ++ y" := (app x y) (at level 60, right associativity).
+
+Fixpoint length {X} (l : list X) : nat :=
+  match l with
+  | nil => O
+  | _ :: l' => S (length l')
+  end.
+
+Inductive reflect (P : Prop) : bool -> Prop :=
+| ReflectT : P -> reflect P true
+| ReflectF : ~ P -> reflect P false.
+
+Theorem iff_reflect : forall P b, (P <-> b = true) -> reflect P b.
+Proof.
+  intros P b H. destruct b eqn:Eb.
+  - apply ReflectT. rewrite H. reflexivity.
+  - apply ReflectF. rewrite H. discriminate. Qed.
+
+Inductive dir : Type :=
+| Left
+| Right.
+
+(* Say a list of directions "proper," if a leaf node
+   is just reached by following the list. *)
+Fixpoint ld_proper {X} (t : btree X) (ld : list dir) : bool :=
+  match t, ld with
+  | {}, [] => true
+  | {l,x,r}, h :: ld' =>
+    match h with
+    | Left => ld_proper l ld'
+    | Right => ld_proper r ld'
+    end
+  | _, _ => false
+  end.
+
+Fixpoint extend_leaf {X} (t : btree X) (ld : list dir) (x' : X) : btree X :=
+  match t with
+  | {} => {{},x',{}}
+  | {l,x,r} =>
+    match ld with
+    | [] => {l,x,r}  (* avoid extending non-leaf nodes *)
+    | h :: ld' =>
+      match h with
+      | Left => {extend_leaf l ld' x',x,r}
+      | Right => {l,x,extend_leaf r ld' x'}
+      end
+    end
+  end.
+
+Example test_extend_leaf1 :
+  extend_leaf {} [] 1 = {{},1,{}}.
+Proof. reflexivity. Qed.
+
+Example test_extend_leaf2 :
+  extend_leaf {{{},2,{}},1,{{},3,{}}} [Right; Left] 4 =
+  {{{},2,{}},1,{{{},4,{}},3,{}}}.
+Proof. reflexivity. Qed.
+
+Example test_extend_leaf3 :
+  extend_leaf {{{},2,{}},1,{{},3,{}}} [Right; Left; Right] 4 =
+  {{{},2,{}},1,{{{},4,{}},3,{}}}.
+Proof. reflexivity. Qed.
+
+Example test_extend_leaf4 :
+  extend_leaf {{{},2,{}},1,{{},3,{}}} [Right] 4 =
+  {{{},2,{}},1,{{},3,{}}}.
+Proof. reflexivity. Qed.
+
+Definition leaf_eqb {X} (t : btree X) : bool :=
+  external_length t 0 =? 0.
+
+Lemma leaf_eqb_eq : forall X (t : btree X),
+    t = {} <-> leaf_eqb t = true.
+Proof.
+  split.
+  - intro H. rewrite H. reflexivity.
+  - unfold leaf_eqb. intro H. apply eqb_eq in H.
+    induction t as [| l IHl x r IHr].
+    + reflexivity.
+    + simpl in H. rewrite <- external_length_S in H.
+      discriminate H. Qed.
+
+Theorem leaf_eqP : forall X (t : btree X),
+    reflect (t = {}) (leaf_eqb t).
+Proof.
+  intros. apply iff_reflect. apply leaf_eqb_eq. Qed.
+
+Lemma non_leaf_is_properly_extended : forall X (t : btree X),
+    ~ (t = {}) ->
+    exists t' ld x', ld_proper t' ld = true /\ t = extend_leaf t' ld x'.
+Proof.
+  induction t as [| l IHl x r IHr].
+  - intros contra. exfalso. apply contra. reflexivity.
+  - intros _. destruct (leaf_eqP _ l).
+    + destruct (leaf_eqP _ r).
+      * exists {}. exists []. exists x. simpl. rewrite H. rewrite H0.
+        split; reflexivity.
+      * apply IHr in H0. destruct H0 as [t' [ld [x' H0]]].
+        exists {l,x,t'}. exists (Right :: ld). exists x'.
+        simpl. destruct H0 as [H0 H1]. rewrite H0. rewrite H1.
+        split; reflexivity.
+    + apply IHl in H. destruct H as [t' [ld [x' H]]].
+      exists {t',x,r}. exists (Left :: ld). exists x'.
+      simpl. destruct H as [H0 H1]. rewrite H0. rewrite H1.
+      split; reflexivity. Qed.
