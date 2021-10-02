@@ -5,7 +5,7 @@
 template<int V>
 using Int = std::integral_constant<int, V>;
 
-template<int V>
+template<bool V>
 using Bool = std::bool_constant<V>;
 
 // List and list operations
@@ -67,7 +67,7 @@ struct Concat_<Nil, L2> {
 template<typename L1, typename L2>
 using Concat = typename Concat_<L1, L2>::type;
 
-// Auxiliary templates for pretty printing the result
+// Auxiliary templates for pretty-printing the result
 
 template<int ...>
 struct P;
@@ -92,7 +92,7 @@ using Pretty = typename Pretty_<T>::type;
 
 template<typename L>
 struct QSort_ {
-    static const int pivot = Car<L>::value;
+    static constexpr int pivot = Car<L>::value;
 
     template<typename T>
     using LE = Bool<T::value <= pivot>;
@@ -105,7 +105,7 @@ struct QSort_ {
 
     using type = Concat<l, Concat<IList<pivot>, r> >;
 };
-    
+
 template<>
 struct QSort_<Nil> {
     using type = Nil;
