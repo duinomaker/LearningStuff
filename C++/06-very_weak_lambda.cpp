@@ -53,14 +53,14 @@ namespace placeholders {
     // ...
 }
 
+// Experiments
+
 using namespace placeholders;
 
 template<typename A1, typename A2>
 struct Add {
     static constexpr int value = Int<A1::value + A2::value>::value;
 };
-
-// Experiments
 
 template<typename A1>
 using twice_template = typename Apply_t<Lambda<Apply<_1, _2, _2> >, Lambda<Add<_1, _2> >, A1>::type;
