@@ -55,12 +55,6 @@
         ((null? (cdr seq)) (cadr seq))
         (else (foldl f (car seq) (cdr seq)))))
 
-(define (list-min seq)
-  (foldl-with-head-as-init min seq))
-
-(define (list-max seq)
-  (foldl-with-head-as-init max seq))
-
 (define (list-max-by-key key seq)
   (foldl-with-head-as-init (lambda (a b)
                              (if (> (key a) (key b))
@@ -196,7 +190,7 @@
                       (board-ref board (car x-and-y) (cdr x-and-y)))
                     all-slices 2))))
 
-(define (evaluate-board-for-computer board player)
+(define (evaluate-board-with-heuristics board player)
   (define computer-color
     (if (player 'computer?) (player 'color) (player 'opponent-color)))
   (define human-color
@@ -264,29 +258,41 @@
          (calc-slice-score slice human-color)))
     (foldl + 0 (map total-score slices))))
 
-; -------- The Min-Max Algorithm ---------------------------------------
+; -------- The Min-Max Algorithm with Alpha-Beta Pruning ---------------
 
-(define (min-max board player depth)
-  (define (list-of-scores)
+(define (min-max board player depth alpha beta)
+  (define maximizing? (player 'computer?))
+  (define (evaluate-board-with-recursion)
     (let ((boards
-           (map (lambda (position) (make-move board (player 'color) position))
+           (map (lambda (position)
+                  (make-move board (player 'color) position))
                 (probable-positions-to-move board))))
-      (map (lambda (board) (min-max board (player 'opponent) (sub1 depth)))
-           boards)))
-  (cond ((zero? depth)
-         (evaluate-board-for-computer board player))
-        ((player 'computer?)
-         (list-max (list-of-scores)))
-        (else
-         (list-min (list-of-scores)))))
+      (define (iter boards alpha beta value)
+        (define (prune? value)
+          (if maximizing? (>= value beta) (<= value alpha)))
+        (if (null? boards)
+            value
+            (let ((new-value
+                   ((if maximizing? max min)
+                    value
+                    (min-max (car boards) (player 'opponent) (sub1 depth)
+                             alpha beta))))
+              (if (prune? new-value)
+                  new-value
+                  (if maximizing?
+                      (iter (cdr boards) (max alpha new-value) beta new-value)
+                      (iter (cdr boards) alpha (min beta new-value) new-value))))))
+      (iter boards alpha beta (if maximizing? -inf.0 +inf.0))))
+  (if (zero? depth)
+      (evaluate-board-with-heuristics board player)
+      (evaluate-board-with-recursion)))
 
 (define (best-move-for-player board player depth)
   (let ((moves (probable-positions-to-move board)))
     (define (to-move-and-score move)
       (cons move
             (min-max (make-move board (player 'color) move)
-                     player
-                     depth)))
+                     player depth -inf.0 +inf.0)))
     (car (list-max-by-key cdr (map to-move-and-score moves)))))
 
 ; -------- The Main Program --------------------------------------------
